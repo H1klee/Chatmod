@@ -11,9 +11,9 @@ public class ChatPacketHandler {
         String prefix = getPlayerPrefix(player);
         String formattedMessage = prefix + player.getDisplayName().getString() + ": " + message;
 
-        System.out.println("💬 " + formattedMessage);
+        System.out.println("💬 " + formattedMessage); // For server console logging
         player.getServer().getPlayerList().getPlayers().forEach(p ->
-                p.sendMessage(new StringTextComponent(formattedMessage), player.getUUID()));
+                p.sendMessage(new StringTextComponent(formattedMessage), player.getUUID())); // Reverted to getUUID
     }
 
     public static void sendGlobalMessage(ServerPlayerEntity sender, String message) {
@@ -21,7 +21,7 @@ public class ChatPacketHandler {
         System.out.println("🔎 Глобальне повідомлення: " + prefix + sender.getName().getString());
 
         sender.getServer().getPlayerList().getPlayers().forEach(player ->
-                player.sendMessage(new StringTextComponent("§9[Глобальний чат] " + prefix + sender.getName().getString() + ": " + message), sender.getUUID())
+                player.sendMessage(new StringTextComponent("§9[Глобальний чат] " + prefix + sender.getName().getString() + ": " + message), sender.getUUID()) // Reverted to getUUID
         );
     }
 
@@ -30,26 +30,30 @@ public class ChatPacketHandler {
         System.out.println("🔎 Локальне повідомлення: " + prefix + sender.getName().getString());
 
         sender.getServer().getPlayerList().getPlayers().stream()
-                .filter(player -> player.distanceTo(sender) <= 50)
-                .forEach(player ->
-                        player.sendMessage(new StringTextComponent("§f[Локальний чат] " + prefix + sender.getName().getString() + ": " + message), sender.getUUID())
+                .filter(p -> p.distanceTo(sender) <= 50)
+                .forEach(p ->
+                        p.sendMessage(new StringTextComponent("§f[Локальний чат] " + prefix + sender.getName().getString() + ": " + message), sender.getUUID()) // Reverted to getUUID
                 );
     }
 
     public static String getPlayerPrefix(ServerPlayerEntity player) {
         LuckPerms luckPerms = LuckPermsInitializer.getLuckPermsSafe().orElse(null);
         if (luckPerms == null) {
-            System.err.println("🔴 LuckPerms API недоступний!");
+            System.err.println("🔴 LuckPerms API недоступний! Prefixes cannot be fetched.");
             return "";
         }
 
-        User user = luckPerms.getUserManager().getUser(player.getUUID());
+        User user = luckPerms.getUserManager().getUser(player.getUUID()); // Reverted to getUUID()
         if (user == null) {
-            System.err.println("🔴 Не вдалося отримати користувача LuckPerms!");
+            // Using getUUID() in the error message as well, for consistency with the call above
+            System.err.println("🔴 Не вдалося отримати користувача LuckPerms для " + player.getName().getString() + " (UUID: " + player.getUUID().toString() + "). Можливо, гравець новий або дані ще не завантажені.");
             return "";
         }
 
         String prefix = user.getCachedData().getMetaData().getPrefix();
-        return prefix != null ? prefix + " " : "";
+        if (prefix == null) {
+            return "";
+        }
+        return prefix + " ";
     }
 }

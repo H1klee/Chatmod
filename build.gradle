@@ -2,8 +2,9 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-    }
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)' // Your existing ForgeGradle
+    id 'com.github.johnrengelman.shadow' version '7.1.2' // Add this line
+}
 
 version = mod_version
 group = mod_group_id
@@ -171,6 +172,12 @@ tasks.named('jar', Jar).configure {
 // This is the preferred method to reobfuscate your jar file
     finalizedBy 'reobfJar'
 }
+shadowJar {
+    archiveClassifier.set('') // This makes the shaded JAR the default JAR without '-shadow' in its name
+    dependencies {
+        include(dependency('net.luckperms:api:5.4')) // This tells ShadowJar to include the LuckPerms API
+    }
+}
 
 // However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing:
 // tasks.named('publish').configure {
@@ -199,11 +206,25 @@ java {
     }
 }
 repositories {
-    mavenCentral()
+    // ForgeGradle automatically adds the Forge maven and Maven Central for you
+    // maven { url = 'https://maven.minecraftforge.net/' } // Usually added by ForgeGradle
+    // mavenCentral() // Usually added by ForgeGradle or can be explicit
+
+    // For Spigot API and potentially other things
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
 }
 dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // For LuckPerms API
     implementation 'net.luckperms:api:5.4'
-    runtimeOnly 'net.luckperms:luckperms:5.4'
+    // runtimeOnly 'net.luckperms:luckperms:5.4' // Keep this if you intend LuckPerms to be a separate mod Forge can see
+
+    // For Spigot/Bukkit API
+    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+
+    // Any other dependencies you might have...
 }
 
 
