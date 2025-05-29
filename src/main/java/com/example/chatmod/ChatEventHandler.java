@@ -1,42 +1,41 @@
 package com.example.chatmod;
 
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraft.entity.player.ServerPlayerEntity;
 
 @Mod.EventBusSubscriber
 public class ChatEventHandler {
     @SubscribeEvent
     public static void onPlayerChat(ServerChatEvent event) {
+        // System.out.println("ChatEventHandler: onPlayerChat EVENT RECEIVED!"); // Basic log, can be re-enabled for debugging
+
         if (event.isCanceled()) {
-            System.out.println("⚠️ Подія чату вже скасована, не відправляємо повторно.");
+            // System.out.println("⚠️ ChatEvent was already cancelled. Ignoring.");
             return;
         }
 
         ServerPlayerEntity player = event.getPlayer();
         if (player == null) {
-            System.err.println("🔴 Гравець не визначений, скасування події.");
+            System.err.println("🔴 Player in ServerChatEvent is null. Cannot process chat.");
             return;
         }
 
         String message = event.getMessage();
         if (message == null || message.trim().isEmpty()) {
-            System.out.println("⚠️ Порожнє повідомлення, нічого не відправляємо.");
+            // System.out.println("⚠️ Empty message. Ignoring.");
             return;
         }
 
-        event.setCanceled(true); // ✅ Запобігання дублюванню стандартного чату
-        System.out.println("✅ Скасовано стандартне відправлення чату!");
-
-        String prefix = ChatPacketHandler.getPlayerPrefix(player);
-        String formattedMessage = prefix + player.getName().getString() + ": " + message;
+        event.setCanceled(true);
+        // System.out.println("✅ Vanilla chat message cancelled by ChatEventHandler.");
 
         if (message.startsWith("!")) {
-            System.out.println("🔎 Визначено глобальне повідомлення");
+            // System.out.println("🔎 Global message detected by ChatEventHandler.");
             ChatPacketHandler.sendGlobalMessage(player, message.substring(1));
         } else {
-            System.out.println("🔎 Визначено локальне повідомлення");
+            // System.out.println("🔎 Local message detected by ChatEventHandler, routing to sendLocalMessage.");
             ChatPacketHandler.sendLocalMessage(player, message);
         }
     }
